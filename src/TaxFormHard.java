@@ -248,11 +248,16 @@ public class TaxFormHard {
    * loop to calculate the specific tax by taking the specific tax on each individual portion
    * The main benefit being that the 4 different tax brackets are based on the given constants, so
    * the method could be easily adjusted when tax brackets changed.
+   *
+   * WARNING: this specific method isn't working 100%. The main reason I wrote this method like was
+   *          to show the different ways of doing something. For a better reference look at the
+   *          calculateJointTax() method, which is much simpler and is working properly.
    ************************************************************************************************/
   @SuppressWarnings("Duplicates")
   private void calculateSingleTax() {
     double taxableIncome = this.taxableIncome;
 
+    //TODO: correct this method
     for (int iteration = 0; iteration < 4 && taxableIncome != 0; ++ iteration) {
       switch (iteration) {
         case 0:
