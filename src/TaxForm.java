@@ -1,318 +1,152 @@
+import java.util.Scanner;
 import java.text.NumberFormat;
 import java.util.Locale;
-import java.util.Scanner;
-
-
-/*************************************************************************************************
+/**
+ * TaxForm class that calculates the 2014 U.S. federal
+ * tax for a single person claimed as a dependent.
+ * This simplified form is only for taxpayers who earned
+ * less than $100,000 and have no dependents
+ *
  * @author Santiago Quiroga
- * @version 11 October 2018
- ************************************************************************************************/
-public class TaxForm {
+ * @version 11 Octubre 2018
+ */
+public class TaxForm  {
+  /** Money you earned and reported on a W-2 form.  */
+  private double wages;
 
-  /**
-   * Variable description
-   */
-  final double TEN_PERCENT = 0.10;
-  /**
-   * Variable description
-   */
-  final double FIFTEEN_PERCENT = 0.15;
-  /**
-   * Variable description
-   */
-  final double TWENTYFIVE_PERCENT = 0.25;
-  /**
-   * Variable description
-   */
-  final double TWENTYEIGHT_PERCENT = 0.28;
-  /**
-   * Variable description
-   */
+  /** Interest your banks paid you on your saving account */
+  private double taxInt;
 
-  final double TEN_PERCENT_TAX_CAP_SINGLE = 932.5;
-  /**
-   * Variable description
-   */
-  final double FIFTEEN_PERCENT_TAX_CAP_SINGLE = 4293.75;
-  /**
-   * Variable description
-   */
-  final double TWENTYFIVE_PERCENT_TAX_CAP_SINGLE = 14312.5;
-  /**
-   * Variable description
-   */
+  /** Government payments for unemployment insurance */
+  private double unemployment;
 
-  final int TEN_PERCENT_CAP_SINGLE = 9325;
-  /**
-   * Variable description
-   */
-  final int FIFTEEN_PERCENT_CAP_SINGLE = 37950;
-  /**
-   * Variable description
-   */
-  final int TWENTYFIVE_PERCENT_CAP_SINGLE = 91900;
-  /**
-   * Variable description
-   */
+  /** Amount of tax your employer withheld from your paychecks */
+  private double withheld;
 
-  final double TEN_PERCENT_CAP_TAX_JOINT = 1865;
-  /**
-   * Variable description
-   */
-  final double FIFTEEN_PERCENT_CAP_TAX_JOINT = 8587.5;
-  /**
-   * Variable description
-   */
+  /** Adjusted gross income (AGI) */
+  private double agi = 0.0;
 
-  final int TEN_PERCENT_CAP = 18650;
-  /**
-   * Variable description
-   */
-  final int FIFTEEN_PERCENT_CAP = 75900;
-  /**
-   * Variable description
-   */
+  /** Taxable income – AGI minus deductions */
+  private double taxableIncome = 0.0;
 
-  double wages;
-  /**
-   * Variable description
-   */
-  double taxableInterest;
-  /**
-   * Variable description
-   */
-  double unemploymentCompendation;
-  /**
-   * Variable description
-   */
-  double federalIncomeTaxWithheld;
-  /**
-   * Variable description
-   */
-  double deduction;
-  /**
-   * Variable description
-   */
-  double adjustedGrossIncome;
-  /**
-   * Variable description
-   */
-  double taxableIncome;
-  /**
-   * Variable description
-   */
-  double tax;
-  /**
-   * Variable description
-   */
-  double amountOwed;
-  /**
-   * Variable description
-   */
-  double refund;
-  /**
-   * Variable description
-   */
+  /** deductions */
+  private double deductions;
 
-  int exemptions;
-  /** Variable description */
+  /** exceptions */
+  private int exceptions;
 
-  /*************************************************************************************************
-   *
-   * @param args
-   ************************************************************************************************/
-  public static void main(String[] args) {
-    TaxForm taxForm = new TaxForm();
-    taxForm.estimateTaxes();
-  }
+  /** Tax – amount of tax is based on the taxable income
+   *  and rates provided in the tax table */
+  private double tax = 0.0;
 
-  /*************************************************************************************************
-   *
-   ************************************************************************************************/
+  /** Refund – if the tax is less than the tax withheld  */
+  private double refund = 0.0;
+
+  /** constants used to calculate the federal tax */
+
+  private static final double TEN_PCT = 0.10;
+  private static final double FIFTEEN_PCT = 0.15 ;
+  private static final double TWENTY_FIVE_PCT = 0.25;
+  private static final double TWENTY_EIGHT_PCT = 0.28;
+
+  NumberFormat fmt = NumberFormat.getCurrencyInstance(Locale.US);
+
   public void estimateTaxes() {
-    Scanner prompt = new Scanner(System.in);
-    NumberFormat format = NumberFormat.getCurrencyInstance(Locale.US);
 
-    System.out.println("Your Information");
+    getData();
 
-    System.out.print("Wages, salaries and tips: ");
-    wages = (double) prompt.nextInt();
-
-    System.out.print("Taxable interest: ");
-    taxableInterest = (double) prompt.nextInt();
-
-    System.out.print("Unemployment compensation: ");
-    unemploymentCompendation = (double) prompt.nextInt();
-
-    System.out.print("Exemptions (0, 1 or 2): ");
-    exemptions = prompt.nextInt();
-
-    System.out.print("Federal income tax withheld: ");
-    federalIncomeTaxWithheld = (double) prompt.nextInt();
-
-    calculateDeduction();
-    calculateAGI();
-    calculateTaxableIncome();
-    calculateTax();
-    calculateAmountOwed();
-    calculateRefund();
-
-    System.out.println();
-    System.out.println("Your Results: ");
-
-    System.out.println("AGI: " + format.format(adjustedGrossIncome));
-    System.out.println("Taxable income: " + format.format(taxableIncome));
-    System.out.println("Federal tax: " + format.format(tax));
-
-    if (amountOwed > refund) {
-      System.out.println("Amount due: " + format.format(amountOwed));
-    } else {
-      System.out.println("Your refund: " + format.format(amountOwed));
-    }
-
-  }
-
-  // Helper methods
-
-  /*************************************************************************************************
-   *
-   ************************************************************************************************/
-  private void calculateDeduction() {
-    switch (exemptions) {
-      case 0:
-        deduction = 6350;
-        break;
-      case 1:
-        deduction = 10400;
-        break;
-      case 2:
-        deduction = 20800;
-        break;
-      default:
-        deduction = 0;
-    }
-  }
-
-  /*************************************************************************************************
-   *
-   ************************************************************************************************/
-  private void calculateAGI() {
-    adjustedGrossIncome = wages + taxableInterest + unemploymentCompendation;
-  }
-
-  /*************************************************************************************************
-   *
-   ************************************************************************************************/
-  private void calculateTaxableIncome() {
-    taxableIncome = adjustedGrossIncome - deduction;
-
-    if (taxableIncome < 0) {
+    agi = wages +  taxInt + unemployment;
+    taxableIncome = agi - deductions;
+    if (taxableIncome < 0 )
       taxableIncome = 0;
+
+    //Calculating tax
+    if (exceptions != 2) {
+      calcSingle();
+      print(0);
+    }
+    else {
+      calcMarried();
+      print(1);
     }
   }
 
-  /*************************************************************************************************
-   *
-   ************************************************************************************************/
-  private void calculateTax() {
-    tax = taxableIncome;
+  private void getData() {
 
-    if (exemptions != 0) {
+    Scanner scan = new Scanner (System.in);
+    System.out.println ("Wages, salaries and tips: ");
+    wages = scan.nextDouble();
+    System.out.println ("Taxable interest: " );
+    taxInt = scan.nextDouble();
+    System.out.println ("Unemployment compensation:  " );
+    unemployment = scan.nextDouble();
+    System.out.println ("Exceptions (0, 1 or 2): " );
+    exceptions = scan.nextInt();
+    System.out.println ("Federal income tax withheld:   " );
+    withheld = scan.nextDouble();
 
-      if (exemptions == 1) {
-        calculateSingleTax();
-      } else {
-        calculateJointTax();
-      }
-    }else {
-      tax = adjustedGrossIncome;
-    }
-
+    deductions = calcDeductions(exceptions );
   }
 
-  /*************************************************************************************************
-   *
-   ************************************************************************************************/
-  @SuppressWarnings("Duplicates")
-  private void calculateSingleTax() {
-    int iteration = 0;
-    double taxableIncome = this.taxableIncome;
+  private void print (int filingStatus){
+    // printing your information
+    System.out.println ("   Your information  ");
+    System.out.println ("************************");
+    System.out.println ("Wages, salaries and tips: " + fmt.format(wages));
+    System.out.println ("Taxable interest: " + fmt.format (taxInt));
+    System.out.println ("Unemployment compensation: " + fmt.format(unemployment));
+    System.out.println ("Deductions (0, 1 or 2): "  + deductions);
+    System.out.println ("Federal income tax withheld: " + fmt.format(withheld));
+    System.out.println ("filing status (single (0) or married filing jointly (1) " +
+        filingStatus);
 
-    while (iteration < 4 && taxableIncome != 0) {
-      switch (iteration) {
-        case 0:
-          if (taxableIncome - TEN_PERCENT_CAP_SINGLE <= 0) {
-            tax = taxableIncome * TEN_PERCENT;
-            iteration = 4;
-          } else {
-            tax = TEN_PERCENT_CAP_SINGLE;
-            taxableIncome -= TEN_PERCENT_TAX_CAP_SINGLE;
-            ++iteration;
-          }
-          break;
-        case 1:
-          if (taxableIncome - FIFTEEN_PERCENT_CAP_SINGLE <= 0) {
-            tax += taxableIncome * FIFTEEN_PERCENT;
-            iteration = 4;
-          } else {
-            tax += FIFTEEN_PERCENT_TAX_CAP_SINGLE;
-            taxableIncome -= FIFTEEN_PERCENT_CAP_SINGLE;
-            ++iteration;
-          }
-          break;
-        case 2:
-          if (taxableIncome - TWENTYFIVE_PERCENT_CAP_SINGLE <= 0) {
-            tax += taxableIncome * TWENTYFIVE_PERCENT;
-            iteration = 4;
-          } else {
-            tax += TWENTYFIVE_PERCENT_TAX_CAP_SINGLE;
-            taxableIncome -= taxableIncome - TWENTYFIVE_PERCENT_CAP_SINGLE;
-            ++iteration;
-          }
-          break;
-        case 3:
-          tax += taxableIncome * TWENTYEIGHT_PERCENT;
-          ++iteration;
-          break;
-      }
-    }
+    // printing your results
+    System.out.println ("     Your Results       ");
+    System.out.println ("************************");
+    System.out.println ("AGI: " + fmt.format(agi));
+    System.out.println ("Taxable Income: " + fmt.format (taxableIncome));
+    System.out.println ("Federal Tax: " + fmt.format(tax));
+    if (refund < 0)
+      System.out.println ("AmountDue: "  + fmt.format( Math.abs(refund)));
+    else
+      System.out.println ("Your Refund: "  + (fmt.format (refund)));
   }
 
-  /*************************************************************************************************
-   *
-   ************************************************************************************************/
-  private void calculateJointTax() {
-    if (taxableIncome <= TEN_PERCENT_CAP_TAX_JOINT) {
-      tax = taxableIncome * TEN_PERCENT;
-    } else if (taxableIncome <= FIFTEEN_PERCENT_CAP_TAX_JOINT) {
-      tax =
-          (taxableIncome - TEN_PERCENT_CAP_TAX_JOINT) * FIFTEEN_PERCENT + TEN_PERCENT_CAP_TAX_JOINT;
-    } else {
-      tax = (taxableIncome - FIFTEEN_PERCENT_CAP_TAX_JOINT - TEN_PERCENT_CAP_TAX_JOINT) *
-          TWENTYFIVE_PERCENT + FIFTEEN_PERCENT_CAP_TAX_JOINT + TEN_PERCENT_CAP_TAX_JOINT;
+  private double calcDeductions (int exceptions)
+  {
+    double deductions;
+    switch (exceptions) {
+      case 0:
+        deductions = 6350; break;
+      case 1:
+        deductions = 10400; break;
+      case 2:
+        deductions = 20800; break;
+      default:
+        deductions = 0;
     }
+    return deductions;
   }
 
-  /*************************************************************************************************
-   *
-   ************************************************************************************************/
-  private void calculateAmountOwed() {
-    if (tax > federalIncomeTaxWithheld) {
-      amountOwed = tax - federalIncomeTaxWithheld;
-    } else {
-      amountOwed = 0;
-    }
+  private void calcSingle () {
+    if (taxableIncome > 0 && taxableIncome <= 9325)
+      tax = Math.round(taxableIncome * TEN_PCT);
+    if (taxableIncome > 9325 && taxableIncome <= 37950)
+      tax = Math.round (932.5 + ((taxableIncome - 9325) * FIFTEEN_PCT));
+    if (taxableIncome > 37950 && taxableIncome <= 91900)
+      tax = Math.round (5226.25 + ((taxableIncome - 37950) * TWENTY_FIVE_PCT));
+    if (taxableIncome > 91900)
+      tax = Math.round (18713.75 + ((taxableIncome - 91900) * TWENTY_EIGHT_PCT));
+    refund = withheld - tax;
   }
 
-  /*************************************************************************************************
-   *
-   ************************************************************************************************/
-  private void calculateRefund() {
-    if (tax < federalIncomeTaxWithheld) {
-      refund = federalIncomeTaxWithheld - tax;
-    } else {
-      refund = 0;
-    }
+  private void calcMarried () {
+    if (taxableIncome > 0 && taxableIncome <= 18650)
+      tax = Math.round(taxableIncome * TEN_PCT);
+    if (taxableIncome > 18650 && taxableIncome <= 75900)
+      tax = Math.round (1865 + ((taxableIncome - 18650) * FIFTEEN_PCT));
+    if (taxableIncome > 75900)
+      tax = Math.round (10452.50 + ((taxableIncome - 75900) * TWENTY_FIVE_PCT));
+    refund = withheld - tax;
   }
-
 }
