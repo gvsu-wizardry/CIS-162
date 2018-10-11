@@ -2,15 +2,15 @@ import java.util.Scanner;
 import java.text.NumberFormat;
 import java.util.Locale;
 /**
- * TaxForm class that calculates the 2014 U.S. federal
+ * TaxFormHard class that calculates the 2014 U.S. federal
  * tax for a single person claimed as a dependent.
  * This simplified form is only for taxpayers who earned
  * less than $100,000 and have no dependents
  *
- * @author Santiago Quiroga
+ * @author Minerva
  * @version 11 Octubre 2018
  */
-public class TaxForm  {
+public class TaxForm {
   /** Money you earned and reported on a W-2 form.  */
   private double wages;
 
@@ -147,6 +147,7 @@ public class TaxForm  {
       tax = Math.round (1865 + ((taxableIncome - 18650) * FIFTEEN_PCT));
     if (taxableIncome > 75900)
       tax = Math.round (10452.50 + ((taxableIncome - 75900) * TWENTY_FIVE_PCT));
+
     refund = withheld - tax;
   }
 }
